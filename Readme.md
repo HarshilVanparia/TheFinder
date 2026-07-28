@@ -224,4 +224,4 @@ The goal of this utility is simple
 Build a fast, reliable, developer focused Windows file search tool that stays lightweight while remaining powerful enough for everyday system wide searching.
 
 If this project helps you, consider giving it a star.
-```
+
