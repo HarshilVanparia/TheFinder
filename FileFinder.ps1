@@ -39,6 +39,21 @@ function Format-Size {
     return "$Bytes B"
 }
 
+function Get-FolderSize {
+    param ([string]$Path)
+    $size = [long]0
+    $stack = [System.Collections.Generic.Stack[string]]::new()
+    $stack.Push($Path)
+    while ($stack.Count -gt 0) {
+        try {
+            $dirInfo = [System.IO.DirectoryInfo]::new($stack.Pop())
+            foreach ($file in $dirInfo.EnumerateFiles()) { $size += $file.Length }
+            foreach ($dir in $dirInfo.EnumerateDirectories()) { $stack.Push($dir.FullName) }
+        } catch { continue }
+    }
+    return $size
+}
+
 function Write-ConsoleProgress {
     param ([psobject]$Progress)
     $CurrentDir = $Progress.CurrentDirectory
@@ -290,7 +305,17 @@ try {
         $ResultItem = $null
         while ($ResultQueue.TryDequeue([ref]$ResultItem)) {
             $HasOutput = $true; $Results[$ResultIndex] = $ResultItem
-            $SizeStr = if ($ResultItem.IsFolder) { "Folder" } else { Format-Size -Bytes $ResultItem.Size }
+            
+            $SizeStr = ""
+            if ($ResultItem.IsFolder) {
+                Clear-InputLine
+                [Console]::Write("`rCalculating size for $($ResultItem.Name)...")
+                $fSize = Get-FolderSize -Path $ResultItem.Path
+                $SizeStr = Format-Size -Bytes $fSize
+                Clear-InputLine
+            } else {
+                $SizeStr = Format-Size -Bytes $ResultItem.Size
+            }
 
             Clear-InputLine
             Write-Host @"
